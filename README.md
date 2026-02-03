@@ -1,0 +1,3 @@
+WRITE MESSAGE ON ishimwejustin277@gmail.com
+IF YOU WANT THIS APP BUY IT
+HIRE ME
