@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>JUSTIN ROBOTIC</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .app {
+      background: #111827;
+      width: 360px;
+      height: 520px;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.5);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    header {
+      background: #1f2933;
+      padding: 14px;
+      text-align: center;
+      font-weight: bold;
+      letter-spacing: .5px;
+    }
+    #chat {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      font-size: 14px;
+    }
+    .msg { margin: 6px 0; }
+    .bot { color: #93c5fd; }
+    .you { color: #34d399; }
+    footer {
+      padding: 10px;
+      background: #1f2933;
+      display: flex;
+      gap: 8px;
+    }
+    button {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+    #talk { background: #38bdf8; color: #022c22; }
+    #clear { background: #374151; color: #e5e7eb; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>JUSTIN ROBOTIC</header>
+    <div id="chat"></div>
+    <footer>
+      <button id="talk">🎤 Talk</button>
+      <button id="clear">🧹 Clear</button>
+    </footer>
+  </div>
+
+  <script>
+    const chat = document.getElementById('chat');
+    const talkBtn = document.getElementById('talk');
+    const clearBtn = document.getElementById('clear');
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    function addMsg(text, who) {
+      const div = document.createElement('div');
+      div.className = 'msg ' + who;
+      div.textContent = (who === 'bot' ? 'Bot: ' : 'You: ') + text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function speak(text) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.rate = 1;
+      speechSynthesis.speak(utter);
+      addMsg(text, 'bot');
+    }
+
+    function getTime() {
+      const d = new Date();
+      return d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+
+    function getDate() {
+      return new Date().toDateString();
+    }
+
+    function loadMemory() {
+      return JSON.parse(localStorage.getItem('memory') || '{}');
+    }
+
+    function saveMemory(mem) {
+      localStorage.setItem('memory', JSON.stringify(mem));
+    }
+
+    function chatLogic(text) {
+      const memory = loadMemory();
+
+      if (text.startsWith('learn')) {
+        try {
+          const part = text.replace('learn', '').trim();
+          const [q, a] = part.split('=');
+          memory[q.trim()] = a.trim();
+          saveMemory(memory);
+          speak('Okay, I learned that.');
+        } catch {
+          speak('Say it like this: learn question = answer');
+        }
+        return;
+      }
+
+      if (memory[text]) {
+        speak(memory[text]);
+        return;
+      }
+
+      if (text.includes('hello') || text.includes('hi')) {
+        speak(['Hello my friend!','Hi there!','Hey! How are you?'][Math.floor(Math.random()*3)]);
+      } else if (text.includes('how are you')) {
+        speak("I'm feeling great because I'm talking with you.");
+      } else if (text.includes('time')) {
+        speak('The time is ' + getTime());
+      } else if (text.includes('date')) {
+        speak('Today is ' + getDate());
+      } else if (text.includes('thank you')) {
+        speak("You're welcome. I'm here for you.");
+      } else if (text.includes('bye') || text.includes('exit')) {
+        speak('Goodbye! Come back anytime.');
+      } else {
+        const small = [
+          "Tell me something interesting about you.",
+          "What made you smile today?",
+          "If you could go anywhere right now, where would you go?",
+          "You are important to me.",
+          "I believe in you."
+        ];
+        speak(small[Math.floor(Math.random()*small.length)]);
+      }
+    }
+
+    recognition.onresult = (event) => {
+      const text = event.results[0][0].transcript.toLowerCase();
+      addMsg(text, 'you');
+      chatLogic(text);
+    };
+
+    recognition.onerror = () => {
+      speak("I didn't catch that. Please try again.");
+    };
+
+    talkBtn.onclick = () => {
+      recognition.start();
+    };
+
+    clearBtn.onclick = () => {
+      chat.innerHTML = '';
+    };
+
+    const hour = new Date().getHours();
+    if (hour < 12) speak('Good morning! I hope today will be amazing for you.');
+    else if (hour < 18) speak('Good afternoon! I am happy to spend time with you.');
+    else speak("Good evening! I'm here for you.");
+  </script>
+</body>
+</html>
